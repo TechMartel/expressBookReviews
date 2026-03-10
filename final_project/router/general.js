@@ -105,25 +105,36 @@ public_users.get('/author/:author', async function (req, res) {
 });
 
 // Get all books based on title
-public_users.get('/title/:title', function (req, res) {
-  const title = req.params.title;
-  
-  // Obtenemos todas las claves del objeto books
-  const keys = Object.keys(books);
-  let filtered_books = [];
+public_users.get('/title/:title', async function (req, res) {
+    const title = req.params.title;
 
-  // Iteramos para buscar coincidencias por título
-  keys.forEach((key) => {
-    if (books[key].title === title) {
-      filtered_books.push(books[key]);
+    try {
+        // Creamos una Promesa para simular la búsqueda asíncrona por título
+        const getBooksByTitle = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const keys = Object.keys(books);
+                let filtered_books = [];
+
+                keys.forEach((key) => {
+                    if (books[key].title === title) {
+                        filtered_books.push(books[key]);
+                    }
+                });
+
+                if (filtered_books.length > 0) {
+                    resolve(filtered_books);
+                } else {
+                    reject({ status: 404, message: "No books found with this title" });
+                }
+            }, 300);
+        });
+
+        const titleBooks = await getBooksByTitle;
+        res.status(200).send(JSON.stringify(titleBooks, null, 4));
+
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || "Error retrieving books by title" });
     }
-  });
-
-  if (filtered_books.length > 0) {
-    res.send(JSON.stringify(filtered_books, null, 4));
-  } else {
-    res.status(404).json({message: "No se encontraron libros con ese título"});
-  }
 });
 
 // Get book review
