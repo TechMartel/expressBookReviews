@@ -32,36 +32,43 @@ public_users.post("/register", (req, res) => {
 });
 
 public_users.get('/', async function (req, res) {
-  try {
-    // Simulamos una llamada asíncrona. En un entorno real, aquí llamarías a una URL externa.
-    // Para este ejercicio, usamos una Promesa que envuelve la respuesta de nuestra "BD".
-    const response = await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(books);
-      }, 100); // Pequeño delay para simular latencia de red
-    });
+    try {
+        const getBooks = () => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => resolve(books), 500);
+            });
+        };
 
-    res.status(200).send(JSON.stringify(response, null, 4));
-  } catch (error) {
-    res.status(500).json({ message: "Error al obtener la lista de libros" });
-  }
+        const booksList = await getBooks();
+        res.status(200).send(JSON.stringify(booksList, null, 4));
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener la lista de libros" });
+    }
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-  // Extraemos el ISBN de los parámetros de la solicitud
-  const isbn = req.params.isbn;
-  
-  // Accedemos al libro usando el ISBN como clave en nuestro objeto 'books'
-  const book = books[isbn];
+public_users.get('/isbn/:isbn', async function (req, res) {
+    const isbn = req.params.isbn;
 
-  if (book) {
-    // Si el libro existe, lo enviamos formateado
-    res.send(JSON.stringify(book, null, 4));
-  } else {
-    // Si no existe, enviamos un error 404
-    res.status(404).json({message: "Libro no encontrado"});
-  }
+    try {
+        // Creamos una Promesa para simular la búsqueda asíncrona
+        const getBook = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const book = books[isbn];
+                if (book) {
+                    resolve(book);
+                } else {
+                    reject({ status: 404, message: "Book not found" });
+                }
+            }, 300); // Simulación de retraso de red
+        });
+
+        const bookDetails = await getBook;
+        res.status(200).send(JSON.stringify(bookDetails, null, 4));
+
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || "Error retrieving book details" });
+    }
 });
   
 // Get book details based on author
