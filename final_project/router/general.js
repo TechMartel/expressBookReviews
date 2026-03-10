@@ -72,25 +72,36 @@ public_users.get('/isbn/:isbn', async function (req, res) {
 });
   
 // Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-  const author = req.params.author;
-  
-  // 1. Obtenemos todas las claves (keys) del objeto books
-  const keys = Object.keys(books);
-  let filtered_books = [];
+public_users.get('/author/:author', async function (req, res) {
+    const author = req.params.author;
 
-  // 2. Iteramos a través del objeto usando las claves
-  keys.forEach((key) => {
-    if (books[key].author === author) {
-      filtered_books.push(books[key]);
+    try {
+        // Creamos una Promesa para simular la búsqueda asíncrona por autor
+        const getBooksByAuthor = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const keys = Object.keys(books);
+                let filtered_books = [];
+                
+                keys.forEach((key) => {
+                    if (books[key].author === author) {
+                        filtered_books.push(books[key]);
+                    }
+                });
+
+                if (filtered_books.length > 0) {
+                    resolve(filtered_books);
+                } else {
+                    reject({ status: 404, message: "No books found for this author" });
+                }
+            }, 300);
+        });
+
+        const authorBooks = await getBooksByAuthor;
+        res.status(200).send(JSON.stringify(authorBooks, null, 4));
+
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || "Error retrieving books by author" });
     }
-  });
-
-  if (filtered_books.length > 0) {
-    res.send(JSON.stringify(filtered_books, null, 4));
-  } else {
-    res.status(404).json({message: "No se encontraron libros de este autor"});
-  }
 });
 
 // Get all books based on title
